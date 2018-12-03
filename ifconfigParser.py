@@ -94,6 +94,10 @@ class interfaceObj(object):
         # all data for the specified interface
         self._dict = None
 
+        # flag properties
+        for flag in interfaceObj._flag_list:
+            setattr(self, flag, None)
+
     @property
     def ipv4(self):
         if self._ipv4 == None:
@@ -212,11 +216,4 @@ if __name__ == '__main__':
     text = subprocess.check_output(["ifconfig"])
     test = ifcParser(text)
     interfaces = test.interfaces
-    #eth = test.get_interface('bond0')
-    #eth.ipv4
-    #eth.ipv6
-    #eth.mask
-    #eth.mac
-    print(test.get_dict())
     print(test)
-    #print(test.prettyPrint())
