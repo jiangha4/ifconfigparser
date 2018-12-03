@@ -76,7 +76,7 @@ class InterfaceParseError(Exception):
 # -----------------------------------------------------------------------------
 
 class interfaceObj(object):
-    _attr_list = ('ipv4', 'ipv6', 'mask', 'mac')
+    _attr_list = ('_ipv4', '_ipv6', '_mask', '_mac')
     _flag_list = ('BROADCAST', 'MULTICAST', 'UP', 'RUNNING', 'LOOPBACK', 'DYNAMIC',
                   'PROMISC', 'NOARP', 'POINTOPOINT', 'SIMPLEX', 'SMART', 'MASTER',
                   'SLAVE')
@@ -85,14 +85,12 @@ class interfaceObj(object):
         self._data = data
         self.name = name
 
-        # properties
-        self._ipv4 = None
-        self._ipv6 = None
-        self._mask = None
-        self._mac = None
-
         # all data for the specified interface
         self._dict = None
+
+        # attr properties
+        for attr in interfaceObj._attr_list:
+            setattr(self, attr, None)
 
         # flag properties
         for flag in interfaceObj._flag_list:
