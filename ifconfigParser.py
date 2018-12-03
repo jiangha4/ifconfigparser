@@ -79,8 +79,9 @@ class parser(object):
             self.interfaces = self._parseInterface()
         log.debug("Parsed interfaces are: {0}".format(self.interfaces))
 
-    def get_ipv4(self):
-        pass
+    def _parseIpv4(self):
+        match = re.findall(r'inet addr:\d*.\d*.\d*.\d*', self.text, flags=re.M | re.I)
+        print(match)
 
     def _parseInterface(self):
         match = re.findall(r'^\w+', self.text, flags=re.M | re.I)
@@ -89,3 +90,4 @@ class parser(object):
 if __name__ == '__main__':
     test = parser(test_text)
     test.get_interfaces()
+    test._parseIpv4()
