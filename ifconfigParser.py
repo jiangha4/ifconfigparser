@@ -60,34 +60,151 @@ if args.debug:
 else:
     log.setLevel(logging.INFO)
 
+# ----------------------------------------------------------------------------
+#   User defined exceptions
+# ----------------------------------------------------------------------------
+
+class InterfaceDoesNotExist(Exception):
+    pass
+
+class InterfaceParseError(Exception):
+    pass
+
 # -----------------------------------------------------------------------------
-#   Main Class: Parser Object
+#   Interface class
 # -----------------------------------------------------------------------------
 
-class parser(object):
+class interfaceObj(object):
     _attr_list = ('ipv4', 'ipv6', 'mask', 'mac')
     _flag_list = ('BROADCAST', 'MULTICAST', 'UP', 'RUNNING', 'LOOPBACK', 'DYNAMIC',
                   'PROMISC', 'NOARP', 'POINTOPOINT', 'SIMPLEX', 'SMART', 'MASTER',
                   'SLAVE')
 
-    def __init__(self, content):
-        self.text = content
-        self.interfaces = None
+    def __init__(self, name, data):
+        self._data = data
+        self.name = name
 
-    def get_interfaces(self):
-        if self.interfaces == None:
-            self.interfaces = self._parseInterface()
-        log.debug("Parsed interfaces are: {0}".format(self.interfaces))
+        # properties
+        self._ipv4 = None
+        self._ipv6 = None
+        self._mask = None
+        self._mac = None
+
+        self._dict = None
+
+    @property
+    def ipv4(self):
+        if self._ipv4 == None:
+            self._ipv4 = self._parseIpv4()
+            log.debug("Parsed ipv4 is: {0}".format(self._ipv4))
+        return self._ipv4
+
+    @property
+    def ipv6(self):
+        if self._ipv6 == None:
+            self._ipv6 = self._parseIpv6()
+            log.debug("Parsed ipv6 is: {0}".format(self._ipv6))
+        return self._ipv6
+
+    @property
+    def mask(self):
+        if self._mask == None:
+            self._mask = self._parseMask()
+            log.debug("Parsed mask is: {0}".format(self._mask))
+        return self._mask
+
+    @property
+    def mac(self):
+        if self._mac == None:
+            self._mac = self._parseMac()
+            log.debug("Parsed mac is: {0}".format(self._mac))
+        return self._mac
 
     def _parseIpv4(self):
-        match = re.findall(r'inet addr:\d*.\d*.\d*.\d*', self.text, flags=re.M | re.I)
-        print(match)
+        match = re.search(r'inet addr:([\d.]*)', self._data, flags=re.M | re.I)
+        if match == None:
+            return ''
+        return match.group(1)
+
+    def _parseIpv6(self):
+        match = re.search(r'inet6 addr: ([\w:/]*)', self._data, flags=re.M | re.I)
+        if match == None:
+            return ''
+        return match.group(1)
+
+    def _parseMac(self):
+        match = re.search(r'HWaddr ([\w:]*)', self._data, flags=re.M | re.I)
+        if match == None:
+            return ''
+        return match.group(1)
+
+    def _parseMask(self):
+        match = re.search(r'Mask:([\d.]*)', self._data, flags=re.M | re.I)
+        if match == None:
+            return ''
+        return match.group(1)
+
+    # Returns a dictionary format of the parsed data
+    def get_dict(self):
+        return {'ipv4': self.ipv4,
+                'ipv6': self.ipv6,
+                'mac': self.mac,
+                'mask': self.mask}
+
+    def print_data_chunk(self):
+        print(self._data)
+
+# -----------------------------------------------------------------------------
+#   Main Class: Parser Object
+# -----------------------------------------------------------------------------
+
+class parser(object):
+    def __init__(self, content):
+        self.text = content
+        self._interfaces = None
+        self._values = {}
+
+    @property
+    def interfaces(self):
+        if self._interfaces == None:
+            self._interfaces = self._parseInterface()
+            log.debug("Parsed interfaces are: {0}".format(self.interfaces))
+        return self._interfaces
+
+    def get_interface(self, interface):
+        if interface not in self._interfaces:
+            raise InterfaceDoesNotExist
+        # construct interface class
+        data = None
+        for data_block in self._parseText():
+            if interface in data_block:
+                data = data_block
+        if data == None:
+            raise InterfaceParseError
+        return interfaceObj(interface, data)
 
     def _parseInterface(self):
         match = re.findall(r'^\w+', self.text, flags=re.M | re.I)
         return match
 
+    def _parseText(self):
+        paragraphs = self.text.split('\n\n')
+        return paragraphs
+
+    def get_values(self):
+        if not self._values:
+            for interfaceName in self._interfaces:
+                interfaceObj = self.get_interface(interfaceName)
+                self._values[interfaceName] = interfaceObj.get_dict()
+        return self._values
+
 if __name__ == '__main__':
     test = parser(test_text)
-    test.get_interfaces()
-    test._parseIpv4()
+    interfaces = test.interfaces
+    eth = test.get_interface('bond0')
+    eth.ipv4
+    eth.ipv6
+    eth.mask
+    eth.mac
+    print(eth.get_dict())
+    print(test.get_values())
