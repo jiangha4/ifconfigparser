@@ -160,11 +160,11 @@ class interfaceObj(object):
 #   Main Class: Parser Object
 # -----------------------------------------------------------------------------
 
-class parser(object):
+class ifcParser(object):
     def __init__(self, content):
         self.text = content
         self._interfaces = None
-        self._ifconfigDict = {}
+        self._ifconfigDict = dict()
 
     @property
     def interfaces(self):
@@ -201,19 +201,22 @@ class parser(object):
         return self._ifconfigDict
 
     def __repr__(self):
+        rep = "\nifcParser:\n"
         if not self._ifconfigDict:
             self.get_dict()
         for key, val in self._ifconfigDict.iteritems():
-            print("{0}: {1}".format(key, val))
+            rep = rep + "{0}: {1}\n".format(key, val)
+        return rep
 
 if __name__ == '__main__':
     text = subprocess.check_output(["ifconfig"])
-    test = parser(text)
+    test = ifcParser(text)
     interfaces = test.interfaces
     #eth = test.get_interface('bond0')
     #eth.ipv4
     #eth.ipv6
     #eth.mask
     #eth.mac
-    #print(eth.get_values())
+    print(test.get_dict())
     print(test)
+    #print(test.prettyPrint())
