@@ -3,6 +3,7 @@ import re
 import logging
 import argparse
 import sys
+import subprocess
 
 test_text = """bond0     Link encap:Ethernet  HWaddr xx:yy:de:ad:be:ef
             inet addr:10.1.1.1  Bcast:10.1.1.255  Mask:255.255.255.0
@@ -90,6 +91,7 @@ class interfaceObj(object):
         self._mask = None
         self._mac = None
 
+        # all data for the specified interface
         self._dict = None
 
     @property
@@ -145,7 +147,7 @@ class interfaceObj(object):
         return match.group(1)
 
     # Returns a dictionary format of the parsed data
-    def get_dict(self):
+    def get_values(self):
         return {'ipv4': self.ipv4,
                 'ipv6': self.ipv6,
                 'mac': self.mac,
@@ -162,7 +164,7 @@ class parser(object):
     def __init__(self, content):
         self.text = content
         self._interfaces = None
-        self._values = {}
+        self._ifconfigDict = {}
 
     @property
     def interfaces(self):
@@ -191,20 +193,27 @@ class parser(object):
         paragraphs = self.text.split('\n\n')
         return paragraphs
 
-    def get_values(self):
-        if not self._values:
+    def get_dict(self):
+        if not self._ifconfigDict:
             for interfaceName in self._interfaces:
                 interfaceObj = self.get_interface(interfaceName)
-                self._values[interfaceName] = interfaceObj.get_dict()
-        return self._values
+                self._ifconfigDict[interfaceName] = interfaceObj.get_values()
+        return self._ifconfigDict
+
+    def __repr__(self):
+        if not self._ifconfigDict:
+            self.get_dict()
+        for key, val in self._ifconfigDict.iteritems():
+            print("{0}: {1}".format(key, val))
 
 if __name__ == '__main__':
-    test = parser(test_text)
+    text = subprocess.check_output(["ifconfig"])
+    test = parser(text)
     interfaces = test.interfaces
-    eth = test.get_interface('bond0')
-    eth.ipv4
-    eth.ipv6
-    eth.mask
-    eth.mac
-    print(eth.get_dict())
-    print(test.get_values())
+    #eth = test.get_interface('bond0')
+    #eth.ipv4
+    #eth.ipv6
+    #eth.mask
+    #eth.mac
+    #print(eth.get_values())
+    print(test)
