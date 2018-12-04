@@ -77,16 +77,17 @@ class InterfaceParseError(Exception):
 
 class interfaceObj(object):
     _attr_list = ('_ipv4', '_ipv6', '_mask', '_mac')
-    _flag_list = ('BROADCAST', 'MULTICAST', 'UP', 'RUNNING', 'LOOPBACK', 'DYNAMIC',
-                  'PROMISC', 'NOARP', 'POINTOPOINT', 'SIMPLEX', 'SMART', 'MASTER',
-                  'SLAVE')
+    _flag_list = ('_BROADCAST', '_MULTICAST', '_UP', '_RUNNING', '_LOOPBACK', '_DYNAMIC',
+                  '_PROMISC', '_NOARP', '_POINTOPOINT', '_SIMPLEX', '_SMART', '_MASTER',
+                  '_SLAVE')
 
     def __init__(self, name, data):
         self._data = data
         self.name = name
 
         # all data for the specified interface
-        self._dict = None
+        self._dict = {}
+        self._flagDict = {}
 
         # attr properties
         for attr in interfaceObj._attr_list:
@@ -95,6 +96,84 @@ class interfaceObj(object):
         # flag properties
         for flag in interfaceObj._flag_list:
             setattr(self, flag, None)
+
+    @property
+    def SLAVE(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_SLAVE']
+
+    @property
+    def MASTER(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_MASTER']
+
+    @property
+    def SMART(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_SMART']
+
+    @property
+    def SIMPLEX(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_SIMPLEX']
+
+    @property
+    def POINTOPOINT(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_POINTOPOINT']
+
+    @property
+    def NOARP(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_NOARP']
+
+    @property
+    def PROMISC(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_PROMISC']
+
+    @property
+    def DYNAMIC(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_DYNAMIC']
+
+    @property
+    def LOOPBACK(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_LOOPBACK']
+
+    @property
+    def BROADCAST(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_BROADCAST']
+
+    @property
+    def MULTICAST(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_MULTICAST']
+
+    @property
+    def UP(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_UP']
+
+    @property
+    def RUNNING(self):
+        if not self._flagDict:
+            self._parseFlags()
+        return self._flagDict['_RUNNING']
 
     @property
     def ipv4(self):
@@ -123,6 +202,15 @@ class interfaceObj(object):
             self._mac = self._parseMac()
             log.debug("Parsed mac is: {0}".format(self._mac))
         return self._mac
+
+    def _parseFlags(self):
+        for flag in interfaceObj._flag_list:
+            match = re.search(r'{0}'.format(flag[1:]), self._data, flags= re.M | re.I)
+            if match:
+                self._flagDict[flag] = True
+            else:
+                self._flagDict[flag] = False
+        log.debug('Parsed flags are {0}: '.format(self._flagDict))
 
     def _parseIpv4(self):
         match = re.search(r'inet addr:([\d.]*)', self._data, flags=re.M | re.I)
@@ -214,4 +302,5 @@ if __name__ == '__main__':
     text = subprocess.check_output(["ifconfig"])
     test = ifcParser(text)
     interfaces = test.interfaces
-    print(test)
+    wlan0 = test.get_interface('wlan0')
+    print(wlan0.BROADCAST)
