@@ -303,4 +303,4 @@ if __name__ == '__main__':
     test = ifcParser(text)
     interfaces = test.interfaces
     wlan0 = test.get_interface('wlan0')
-    print(wlan0.BROADCAST)
+    print(wlan0.UP)
