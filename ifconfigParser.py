@@ -284,6 +284,8 @@ class ifcParser(object):
         return paragraphs
 
     def get_dict(self):
+        if self._interfaces == None:
+            self._interfaces = self._parseInterface()
         if not self._ifconfigDict:
             for interfaceName in self._interfaces:
                 interfaceObj = self.get_interface(interfaceName)
@@ -299,8 +301,6 @@ class ifcParser(object):
         return rep
 
 if __name__ == '__main__':
-    text = subprocess.check_output(["ifconfig"])
-    test = ifcParser(text)
-    interfaces = test.interfaces
-    wlan0 = test.get_interface('wlan0')
-    print(wlan0.UP)
+    #text = subprocess.check_output(["ifconfig"])
+    test = ifcParser(test_text)
+    print(test)
